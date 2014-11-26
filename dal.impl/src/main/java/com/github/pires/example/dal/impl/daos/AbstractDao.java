@@ -15,6 +15,7 @@ package com.github.pires.example.dal.impl.daos;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -30,6 +31,7 @@ public class AbstractDao<T> {
 
   protected Class<T> entityClass;
   private EntityManager em;
+  private EntityManagerFactory emf;
 
   public AbstractDao(Class<T> entityClass) {
     this.entityClass = entityClass;
@@ -43,46 +45,67 @@ public class AbstractDao<T> {
     this.em = em;
   }
 
+  public EntityManagerFactory getEntityManagerFactory() {
+    return this.emf;
+  }
+
+  public void setEntityManagerFactory(EntityManagerFactory emf) {
+    this.emf = emf;
+    this.em = emf.createEntityManager();
+  }
+
   /**
    * Retrieves the meta-model for a certain entity.
    * 
    * @return the meta-model of a certain entity.
    */
   protected EntityType<T> getMetaModel() {
-    return getEntityManager().getMetamodel().entity(entityClass);
+    return em.getMetamodel().entity(entityClass);
   }
 
   public void persist(T entity) {
-    getEntityManager().persist(entity);
+    this.em = emf.createEntityManager();
+    em.getTransaction().begin();
+    em.persist(entity);
+    em.getTransaction().commit();
   }
 
   public T merge(T entity) {
-    return getEntityManager().merge(entity);
+    em.getTransaction().begin();
+    T result = em.merge(entity);
+    em.getTransaction().commit();
+    return result;
   }
 
   public void remove(Object entityId) {
     T entity = find(entityId);
-    if (entity != null)
-      getEntityManager().remove(entity);
+    if (entity != null){
+      em.getTransaction().begin();
+      em.remove(entity);
+      em.getTransaction().commit();
+    }
+      
   }
 
   public T find(Object id) {
-    return getEntityManager().find(entityClass, id);
+    this.em = emf.createEntityManager();
+    return em.find(entityClass, id);
   }
 
   public List<T> findAll() {
-    CriteriaQuery<T> cq = getEntityManager().getCriteriaBuilder().createQuery(
+    this.em = emf.createEntityManager();
+    CriteriaQuery<T> cq = em.getCriteriaBuilder().createQuery(
         entityClass);
     cq.select(cq.from(entityClass));
-    return getEntityManager().createQuery(cq).getResultList();
+    return em.createQuery(cq).getResultList();
   }
 
   public int count() {
-    CriteriaBuilder cb = getEntityManager().getCriteriaBuilder();
+    CriteriaBuilder cb = em.getCriteriaBuilder();
     CriteriaQuery<Long> cq = cb.createQuery(Long.class);
     Root<T> root = cq.from(entityClass);
     cq.select(cb.count(root));
-    return getEntityManager().createQuery(cq).getSingleResult().intValue();
+    return em.createQuery(cq).getSingleResult().intValue();
   }
 
 }

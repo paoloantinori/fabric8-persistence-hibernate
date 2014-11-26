@@ -16,28 +16,25 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Version;
 
 @Entity
 public class UserEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  private Long id;
-  @Version
-  private Long version;
+  private long id;
 
   private String name;
 
   public UserEntity() {
   }
 
-  public Long getId() {
+  public long getId() {
     return id;
   }
 
-  public Long getVersion() {
-    return version;
+  public void setId(long id) {
+    this.id =  id;
   }
 
   public String getName() {
@@ -46,6 +43,11 @@ public class UserEntity {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String toString(){
+
+    return "User<name=" + name + ">";
   }
 
 }
